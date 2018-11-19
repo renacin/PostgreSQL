@@ -45,7 +45,7 @@ def database_connect():
         return connection, cursor
 
     except psycopg2.DatabaseError:
-        pprint("Cannot Connect...")
+        pprint("Cannot Connect")
 
 
 # Query Database
