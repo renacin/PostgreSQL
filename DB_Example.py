@@ -9,6 +9,8 @@
 # ----------------------------------------------------------------------------------------------------------------------
 
 import re
+import psycopg2
+import pprint
 import pandas as pd
 from selenium import webdriver
 
@@ -23,10 +25,61 @@ PURPOSE:
 # ----------------------------------------------------------------------------------------------------------------------
 
 
-# //TODO: CAN THIS BE SIMPLIFIED?
-# This Function Will Collect The Websites Associated With Each Entry
-def get_data(x):
+# Connect To Database
+def database_connect():
+    try:
+        connection = psycopg2.connect(
+            "dbname='FuellyData' user='postgres' host='localhost' password='password' port='5432' ")
+        connection.autocommit = True
+        cursor = connection.cursor()
+        pprint("Database Connected")
 
+        return connection, cursor
+
+    except psycopg2.DatabaseError:
+        pprint("Cannot Connect")
+
+
+# Query Existence Of Table
+def database_query(cursor):
+    command = "CREATE TABLE IF NOT EXISTS VehicleData(Manufacturer varchar(15), \
+                    Make varchar(15),Year INTERGER, AVG_MPG INTERGER)"
+
+    cursor.execute(command)
+    pprint("Cursor Executed")
+    cursor.close()
+    pprint("Cursor Closed")
+    del command
+
+
+# Add Data To Database
+def database_add(cursor, manu, make, year, mpg):
+    command = "INSERT INTO VehicleData (Manufacturer, Make, Year, AVG_MPG) \
+                    Values('" + manu + "','" + make + "','" + year + "','" + mpg + "')"
+
+    cursor.execute(command)
+    pprint("Cursor Executed")
+    cursor.close()
+    pprint("Cursor Closed")
+    del command
+
+
+# Close Connection To Database
+def database_close(connection):
+    try:
+        connection.close()
+        pprint("Connection Closed")
+
+    except AttributeError as e:
+        pprint(e)
+        pprint("Cannot Close Connection")
+
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+
+# This Function Will Collect The Websites Associated With Each Entry
+def get_links(x):
     # Prepare The Chrome Driver
     chromedriver = "/Users/renacinmatadeen/Documents/Programming/Python/2018/DriverSelenium/chromedriver"
     chrome_options = webdriver.ChromeOptions()
@@ -76,6 +129,7 @@ def get_data(x):
         df["Name"] = name_
         df["Website"] = website_
 
+        print("Links Parsed...")
         return df
 
     # If Something Goes Wrong Catch The Error
@@ -86,11 +140,24 @@ def get_data(x):
         chrome.quit()
 
 
+def parse_data(data_frame):
+    data_frame.close()
+
+
 # ----------------------------------------------------------------------------------------------------------------------
 
-
 if __name__ == "__main__":
-    # Main Program
+    # Get Links
     target_url = "http://www.fuelly.com/car"
-    df = get_data(target_url)
-    print(df.head())
+    df = get_links(target_url)
+
+    # Connect To Database
+    conn, cur = database_connect()
+
+    # Query Database
+    database_query(cur)
+
+    # Parse Data From Links, Append To Database
+
+    # Close Database ConnectionError
+    database_close(conn)
