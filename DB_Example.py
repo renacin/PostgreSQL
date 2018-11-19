@@ -14,7 +14,16 @@ from selenium import webdriver
 
 # ----------------------------------------------------------------------------------------------------------------------
 
+'''
+PURPOSE:
+    Using Selenium as a headless webscraper, data will be parsed from fuelly. The scraped data will then be handed off
+    to a PostgreSQL database. Once the database has been populated a number of SQL queries will be made.
+'''
 
+# ----------------------------------------------------------------------------------------------------------------------
+
+
+# //TODO: CAN THIS BE SIMPLIFIED?
 # This Function Will Collect The Websites Associated With Each Entry
 def get_data(x):
 
