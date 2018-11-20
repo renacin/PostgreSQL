@@ -8,10 +8,8 @@
 #
 # ----------------------------------------------------------------------------------------------------------------------
 
-import time
 import re
 import psycopg2
-import pprint
 import pandas as pd
 from selenium import webdriver
 
@@ -29,62 +27,57 @@ PURPOSE:
 # Connect To Database
 def database_connect():
     try:
-        connection = psycopg2.connect(
-            "dbname='FuellyData' user='postgres' host='localhost' password='password' port='5432' ")
-        connection.autocommit = True
-        cursor = connection.cursor()
-        pprint("Database Connected")
-
-        return connection, cursor
+        conn = psycopg2.connect(
+            "dbname='FuellyData' user='postgres' host='localhost' password='password' port='5432'")
+        conn.autocommit = True
+        cursor = conn.cursor()
+        print("Database Connected")
+        return conn, cursor
 
     except psycopg2.DatabaseError:
-        pprint("Cannot Connect")
+        print("Cannot Connect")
 
 
 # Query Delete Past Attempts Table
 def database_delete(cursor):
-    command = "DELETE TABLE IF EXISTS VehicleData"
-
+    command = "DROP TABLE IF EXISTS VehicleData"
     cursor.execute(command)
-    pprint("Table Deleted")
-    cursor.close()
-    pprint("Cursor Closed")
+    print("Table Deleted")
     del command
 
 
 # Query Existence Of Table
 def database_create(cursor):
-    command = "CREATE TABLE IF NOT EXISTS VehicleData(Manufacturer varchar(15), \
-                Make varchar(15), Year INTERGER, AVG_MPG FLOAT, Num_Vehicles INTERGER, Miles INTERGER)"
+    command = "CREATE TABLE IF NOT EXISTS VehicleData(Manufacturer varchar(30), \
+                Make varchar(30), Year INTEGER, AVG_MPG FLOAT, Num_Vehicles INTEGER, Miles INTEGER)"
 
     cursor.execute(command)
-    pprint("Table Created")
-    cursor.close()
-    pprint("Cursor Closed")
+    print("Table Created")
     del command
 
 
 # Add Data To Database
 def database_add(cursor, manu, make, year, mpg, num_veh, miles):
-    command = "INSERT INTO VehicleData (Manufacturer, Make, Year, AVG_MPG) \
+    command = "INSERT INTO VehicleData (Manufacturer, Make, Year, AVG_MPG, Num_Vehicles, Miles) \
                 Values('" + manu + "','" + make + "','" + year + "','" + mpg + "','" + num_veh + "','" + miles + "')"
 
     cursor.execute(command)
-    pprint("Data Inserted")
-    cursor.close()
-    pprint("Cursor Closed")
     del command
+
+
+def close_cursor(cursor):
+    cursor.close()
 
 
 # Close Connection To Database
 def database_close(connection):
     try:
         connection.close()
-        pprint("Connection Closed")
+        print("Connection Closed")
 
     except AttributeError as e:
-        pprint(e)
-        pprint("Cannot Close Connection")
+        print(e)
+        print("Cannot Close Connection")
 
 
 # ----------------------------------------------------------------------------------------------------------------------
@@ -191,28 +184,24 @@ def parse_data(cursor, df):
 
             # Use Regex To Parse Year, MPG, Num_Vehiclesand Total Miles & Clean When Needed!
             year = re.findall('year"><span>(.*)</span></li>', listing)
-            year = list(map(int, year))
-
             mpg = re.findall('data">(.*)</span> <span class="summary-avg-label">A', listing)
-            mpg = list(map(float, mpg))
-
             num_vehicles = re.findall('-total">(.*) <span>Vehicle', listing)
-            num_vehicles = list(map(int, num_vehicles))
 
             miles = re.findall('miles">(.*) <span>Miles Tracked', listing)
             miles = [value.replace('N/A', '0') for value in miles]
             miles = [value.replace(',', '') for value in miles]
-            miles = list(map(int, miles))
 
             # Add Data To Database
-            database_add(cursor, df["Manufacturer"][x], df["Name"]
-                         [x], year, mpg, num_vehicles, miles)
+            # //TODO: Sanitize Inputs!
+            for y in range(0, len(year)):
+                database_add(cursor, df["Manufacturer"][x], df["Name"][x],
+                             year[y], mpg[y], num_vehicles[y], miles[y])
 
         # User Information
         print("{0}: {1} - Complete".format(df["Manufacturer"][x], df["Name"][x]))
 
-        # Quit Current Chrome Driver
-        chrome.quit()
+    # Quit Current Chrome Driver
+    chrome.quit()
 
 
 # ----------------------------------------------------------------------------------------------------------------------
@@ -230,10 +219,13 @@ if __name__ == "__main__":
     database_delete(cur)
 
     # Create Database
-    database_delete(cur)
+    database_create(cur)
 
     # Parse Data From Links, Append To Database
     parse_data(cur, df)
+
+    # Close The Cursor
+    close_cursor(cur)
 
     # Close Database ConnectionError
     database_close(conn)
