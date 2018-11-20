@@ -140,8 +140,13 @@ def get_links(x):
         chrome.quit()
 
 
-def parse_data(data_frame):
-    data_frame.close()
+def parse_data(df):
+    # Get Range Of DF
+    df_len = len(df.index)
+
+    # Loop Through Each Row & Visit The Associated Website. Pull Information, Upload To The DB
+    for x in range(0, df_len):
+        focus_url = df["Website"][x]
 
 
 # ----------------------------------------------------------------------------------------------------------------------
@@ -150,14 +155,15 @@ if __name__ == "__main__":
     # Get Links
     target_url = "http://www.fuelly.com/car"
     df = get_links(target_url)
+    parse_data(df)
 
-    # Connect To Database
-    conn, cur = database_connect()
-
-    # Query Database
-    database_query(cur)
-
-    # Parse Data From Links, Append To Database
-
-    # Close Database ConnectionError
-    database_close(conn)
+    # # Connect To Database
+    # conn, cur = database_connect()
+    #
+    # # Query Database
+    # database_query(cur)
+    #
+    # # Parse Data From Links, Append To Database
+    #
+    # # Close Database ConnectionError
+    # database_close(conn)
