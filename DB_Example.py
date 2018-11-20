@@ -82,9 +82,10 @@ def database_close(connection):
 # This Function Will Collect The Websites Associated With Each Entry
 def get_links(x):
     # Prepare The Chrome Driver
+    path1 = "/Users/renacinmatadeen/Documents/Programming/Python/2018/DriverSelenium/uBlock-Origin_v1.14.8.crx"
     chromedriver = "/Users/renacinmatadeen/Documents/Programming/Python/2018/DriverSelenium/chromedriver"
     chrome_options = webdriver.ChromeOptions()
-    chrome_options.add_argument("headless")
+    chrome_options.add_extension(path1)
     chrome = webdriver.Chrome(executable_path=chromedriver, options=chrome_options)
 
     # Initialize The Chrome Driver
@@ -130,7 +131,7 @@ def get_links(x):
         df["Name"] = name_
         df["Website"] = website_
 
-        print("Links Parsed...")
+        print("\n{:-^20}".format("Links Parsed"))
         return df
 
     # If Something Goes Wrong Catch The Error
@@ -146,10 +147,9 @@ def parse_data(df):
     path1 = "/Users/renacinmatadeen/Documents/Programming/Python/2018/DriverSelenium/uBlock-Origin_v1.14.8.crx"
     chromedriver = "/Users/renacinmatadeen/Documents/Programming/Python/2018/DriverSelenium/chromedriver"
 
-    # Prepare The Chrome Driver
+    # Prepare The Chrome Driver, Headless Wont Be Used As Extensions Cannot Be Used
     chrome_options = webdriver.ChromeOptions()
     chrome_options.add_extension(path1)
-    chrome_options.add_argument("headless")
     chrome = webdriver.Chrome(executable_path=chromedriver, options=chrome_options)
 
     # Get Range Of DF
@@ -157,6 +157,7 @@ def parse_data(df):
 
     # Loop Through Each Row & Visit The Associated Website. Pull Information, Upload To The DB
     for x in range(0, df_len):
+
         # Search Website
         focus_url = df["Website"][x]
         chrome.get(focus_url)
@@ -170,6 +171,32 @@ def parse_data(df):
         except Exception:
             pass
 
+        # Get All Instances
+        instances_location = "/html/body/div[1]/div/div[2]/section/div"
+        entries = chrome.find_elements_by_xpath(instances_location)
+        for listing in entries:
+            listing = listing.get_attribute("outerHTML")
+
+            # Use Regex To Parse Year, MPG, Num_Vehiclesand Total Miles & Clean When Needed!
+            year = re.findall('year"><span>(.*)</span></li>', listing)
+            year = list(map(int, year))
+
+            mpg = re.findall('data">(.*)</span> <span class="summary-avg-label">A', listing)
+            mpg = list(map(float, mpg))
+
+            num_vehicles = re.findall('-total">(.*) <span>Vehicle', listing)
+            num_vehicles = list(map(int, num_vehicles))
+
+            miles = re.findall('miles">(.*) <span>Miles Tracked', listing)
+            miles = [value.replace('N/A', '0') for value in miles]
+            miles = [value.replace(',', '') for value in miles]
+            miles = list(map(int, miles))
+
+            # //TODO: CONNECT TO DATABASE!
+
+        # User Information
+        print("{0}: {1} - Complete".format(df["Manufacturer"][x], df["Name"][x]))
+        # Find Data To Be Parsed, Clean, and Append
         time.sleep(5)
         chrome.quit
 
