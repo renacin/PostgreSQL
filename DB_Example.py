@@ -8,6 +8,7 @@
 #
 # ----------------------------------------------------------------------------------------------------------------------
 
+import time
 import re
 import psycopg2
 import pprint
@@ -141,12 +142,36 @@ def get_links(x):
 
 
 def parse_data(df):
+    # Paths
+    path1 = "/Users/renacinmatadeen/Documents/Programming/Python/2018/DriverSelenium/uBlock-Origin_v1.14.8.crx"
+    chromedriver = "/Users/renacinmatadeen/Documents/Programming/Python/2018/DriverSelenium/chromedriver"
+
+    # Prepare The Chrome Driver
+    chrome_options = webdriver.ChromeOptions()
+    chrome_options.add_extension(path1)
+    chrome_options.add_argument("headless")
+    chrome = webdriver.Chrome(executable_path=chromedriver, options=chrome_options)
+
     # Get Range Of DF
     df_len = len(df.index)
 
     # Loop Through Each Row & Visit The Associated Website. Pull Information, Upload To The DB
     for x in range(0, df_len):
+        # Search Website
         focus_url = df["Website"][x]
+        chrome.get(focus_url)
+
+        # If There Is A Pop Up, Click The Dismiss Button
+        button_ = '//*[@id="close_x"]'
+        try:
+            pop_up_escape = chrome.find_element_by_xpath(button_)
+            pop_up_escape.click()
+
+        except Exception:
+            pass
+
+        time.sleep(5)
+        chrome.quit
 
 
 # ----------------------------------------------------------------------------------------------------------------------
@@ -154,6 +179,7 @@ def parse_data(df):
 if __name__ == "__main__":
     # Get Links
     target_url = "http://www.fuelly.com/car"
+    # Get Data From Links
     df = get_links(target_url)
     parse_data(df)
 
