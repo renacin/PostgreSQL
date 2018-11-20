@@ -41,25 +41,36 @@ def database_connect():
         pprint("Cannot Connect")
 
 
-# Query Existence Of Table
-def database_query(cursor):
-    command = "CREATE TABLE IF NOT EXISTS VehicleData(Manufacturer varchar(15), \
-                    Make varchar(15),Year INTERGER, AVG_MPG INTERGER)"
+# Query Delete Past Attempts Table
+def database_delete(cursor):
+    command = "DELETE TABLE IF EXISTS VehicleData"
 
     cursor.execute(command)
-    pprint("Cursor Executed")
+    pprint("Table Deleted")
+    cursor.close()
+    pprint("Cursor Closed")
+    del command
+
+
+# Query Existence Of Table
+def database_create(cursor):
+    command = "CREATE TABLE IF NOT EXISTS VehicleData(Manufacturer varchar(15), \
+                Make varchar(15), Year INTERGER, AVG_MPG FLOAT, Num_Vehicles INTERGER, Miles INTERGER)"
+
+    cursor.execute(command)
+    pprint("Table Created")
     cursor.close()
     pprint("Cursor Closed")
     del command
 
 
 # Add Data To Database
-def database_add(cursor, manu, make, year, mpg):
+def database_add(cursor, manu, make, year, mpg, num_veh, miles):
     command = "INSERT INTO VehicleData (Manufacturer, Make, Year, AVG_MPG) \
-                    Values('" + manu + "','" + make + "','" + year + "','" + mpg + "')"
+                Values('" + manu + "','" + make + "','" + year + "','" + mpg + "','" + num_veh + "','" + miles + "')"
 
     cursor.execute(command)
-    pprint("Cursor Executed")
+    pprint("Data Inserted")
     cursor.close()
     pprint("Cursor Closed")
     del command
@@ -131,7 +142,7 @@ def get_links(x):
         df["Name"] = name_
         df["Website"] = website_
 
-        print("\n{:-^20}".format("Links Parsed"))
+        print("\n{:-^15}".format("Links Parsed"))
         return df
 
     # If Something Goes Wrong Catch The Error
@@ -142,7 +153,8 @@ def get_links(x):
         chrome.quit()
 
 
-def parse_data(df):
+def parse_data(cursor, df):
+    print("\n{:-^15}".format("Data Parsed"))
     # Paths
     path1 = "/Users/renacinmatadeen/Documents/Programming/Python/2018/DriverSelenium/uBlock-Origin_v1.14.8.crx"
     chromedriver = "/Users/renacinmatadeen/Documents/Programming/Python/2018/DriverSelenium/chromedriver"
@@ -192,31 +204,36 @@ def parse_data(df):
             miles = [value.replace(',', '') for value in miles]
             miles = list(map(int, miles))
 
-            # //TODO: CONNECT TO DATABASE!
+            # Add Data To Database
+            database_add(cursor, df["Manufacturer"][x], df["Name"]
+                         [x], year, mpg, num_vehicles, miles)
 
         # User Information
         print("{0}: {1} - Complete".format(df["Manufacturer"][x], df["Name"][x]))
-        # Find Data To Be Parsed, Clean, and Append
-        time.sleep(5)
-        chrome.quit
+
+        # Quit Current Chrome Driver
+        chrome.quit()
 
 
 # ----------------------------------------------------------------------------------------------------------------------
 
 if __name__ == "__main__":
+
     # Get Links
     target_url = "http://www.fuelly.com/car"
-    # Get Data From Links
     df = get_links(target_url)
-    parse_data(df)
 
-    # # Connect To Database
-    # conn, cur = database_connect()
-    #
-    # # Query Database
-    # database_query(cur)
-    #
-    # # Parse Data From Links, Append To Database
-    #
-    # # Close Database ConnectionError
-    # database_close(conn)
+    # Connect To Database
+    conn, cur = database_connect()
+
+    # Delete Past Database
+    database_delete(cur)
+
+    # Create Database
+    database_delete(cur)
+
+    # Parse Data From Links, Append To Database
+    parse_data(cur, df)
+
+    # Close Database ConnectionError
+    database_close(conn)
