@@ -23,26 +23,28 @@ PURPOSE:
 
 if __name__ == "__main__":
 
-    # Get Links
-    target_url = "http://www.fuelly.com/car"
-    df = get_links(target_url)
+    try:
+        # Get Links
+        target_url = "http://www.fuelly.com/car"
+        df = get_links(target_url)
 
-    # Connect To Database
-    conn, cur = database_connect()
+        # Connect To Database
+        conn, cur = database_connect()
 
-    # Delete Past Database
-    database_delete(cur)
+        # Delete Past Database
+        database_delete(cur)
 
-    # Create Database
-    database_create(cur)
+        # Create Database
+        database_create(cur)
 
-    # Parse Data From Links, Append To Database
-    parse_data(cur, df)
+        # Parse Data From Links, Append To Database
+        parse_data(cur, df)
 
-    # Close The Cursor
-    close_cursor(cur)
+    except ValueError:
+        # Close The Cursor
+        close_cursor(cur)
 
-    # Close Database ConnectionError
-    database_close(conn)
+        # Close Database ConnectionError
+        database_close(conn)
 
 # ----------------------------------------------------------------------------------------------------------------------
