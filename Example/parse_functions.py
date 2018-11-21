@@ -131,7 +131,10 @@ def parse_data(cursor, df):
 
             # Use Regex To Parse Year, MPG, Num_Vehiclesand Total Miles & Clean When Needed!
             year = re.findall('year"><span>(.*)</span></li>', listing)
+
             mpg = re.findall('data">(.*)</span> <span class="summary-avg-label">A', listing)
+            mpg = list(map(float, mpg))
+
             num_vehicles = re.findall('-total">(.*) <span>Vehicle', listing)
 
             miles = re.findall('miles">(.*) <span>Miles Tracked', listing)
