@@ -1,5 +1,5 @@
 # Name:                                             Renacin Matadeen
-# Date:                                                11/18/2018
+# Date:                                                11/20/2018
 # Title                                             Fuelly Database
 #
 #
@@ -9,76 +9,17 @@
 # ----------------------------------------------------------------------------------------------------------------------
 
 import re
-import psycopg2
 import pandas as pd
 from selenium import webdriver
+
+from db_functions import database_add
 
 # ----------------------------------------------------------------------------------------------------------------------
 
 '''
 PURPOSE:
-    Using Selenium as a headless webscraper, data will be parsed from fuelly. The scraped data will then be handed off
-    to a PostgreSQL database. Once the database has been populated a number of SQL queries will be made.
+    These functions will help parse the data from the pertinent website.
 '''
-
-# ----------------------------------------------------------------------------------------------------------------------
-
-
-# Connect To Database
-def database_connect():
-    try:
-        conn = psycopg2.connect(
-            "dbname='FuellyData' user='postgres' host='localhost' password='password' port='5432'")
-        conn.autocommit = True
-        cursor = conn.cursor()
-        print("Database Connected")
-        return conn, cursor
-
-    except psycopg2.DatabaseError:
-        print("Cannot Connect")
-
-
-# Query Delete Past Attempts Table
-def database_delete(cursor):
-    command = "DROP TABLE IF EXISTS VehicleData"
-    cursor.execute(command)
-    print("Table Deleted")
-    del command
-
-
-# Query Existence Of Table
-def database_create(cursor):
-    command = "CREATE TABLE IF NOT EXISTS VehicleData(Manufacturer varchar(30), \
-                Make varchar(30), Year INTEGER, AVG_MPG FLOAT, Num_Vehicles INTEGER, Miles INTEGER)"
-
-    cursor.execute(command)
-    print("Table Created")
-    del command
-
-
-# Add Data To Database
-def database_add(cursor, manu, make, year, mpg, num_veh, miles):
-    command = "INSERT INTO VehicleData (Manufacturer, Make, Year, AVG_MPG, Num_Vehicles, Miles) \
-                Values('" + manu + "','" + make + "','" + year + "','" + mpg + "','" + num_veh + "','" + miles + "')"
-
-    cursor.execute(command)
-    del command
-
-
-def close_cursor(cursor):
-    cursor.close()
-
-
-# Close Connection To Database
-def database_close(connection):
-    try:
-        connection.close()
-        print("Connection Closed")
-
-    except AttributeError as e:
-        print(e)
-        print("Cannot Close Connection")
-
 
 # ----------------------------------------------------------------------------------------------------------------------
 
@@ -203,29 +144,4 @@ def parse_data(cursor, df):
     # Quit Current Chrome Driver
     chrome.quit()
 
-
 # ----------------------------------------------------------------------------------------------------------------------
-
-if __name__ == "__main__":
-
-    # Get Links
-    target_url = "http://www.fuelly.com/car"
-    df = get_links(target_url)
-
-    # Connect To Database
-    conn, cur = database_connect()
-
-    # Delete Past Database
-    database_delete(cur)
-
-    # Create Database
-    database_create(cur)
-
-    # Parse Data From Links, Append To Database
-    parse_data(cur, df)
-
-    # Close The Cursor
-    close_cursor(cur)
-
-    # Close Database ConnectionError
-    database_close(conn)
