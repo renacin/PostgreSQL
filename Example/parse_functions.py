@@ -104,6 +104,12 @@ def parse_data(cursor, df):
     # Loop Through Each Row & Visit The Associated Website. Pull Information, Upload To The DB
     for x in range(0, df_len):
 
+        # State Sanitized Name & Make
+        manu = df["Manufacturer"][x]
+        name = df["Name"][x]
+        manu = manu.replace("'", "")
+        name = name.replace("'", "")
+
         # Search Website
         focus_url = df["Website"][x]
         chrome.get(focus_url)
@@ -133,10 +139,8 @@ def parse_data(cursor, df):
             miles = [value.replace(',', '') for value in miles]
 
             # Add Data To Database
-            # //TODO: Sanitize Inputs!
             for y in range(0, len(year)):
-                database_add(cursor, df["Manufacturer"][x], df["Name"][x],
-                             year[y], mpg[y], num_vehicles[y], miles[y])
+                database_add(cursor, manu, name, year[y], mpg[y], num_vehicles[y], miles[y])
 
         # User Information
         print("{0}: {1} - Complete".format(df["Manufacturer"][x], df["Name"][x]))
